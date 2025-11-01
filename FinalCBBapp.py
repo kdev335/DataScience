@@ -11,7 +11,7 @@ import io
 # Load data with caching for better performance
 @st.cache_data
 def load_data():
-    return pd.read_csv('short_wide_xWS2_df.csv')
+    return pd.read_csv('short_wide_vWS_df_October.csv')
 
 # Cache model fitting for better performance
 @st.cache_data
@@ -19,8 +19,8 @@ def fit_models(df):
     models = {}
     for i in range(1, 11):
         mp_col = f'MP{i}' if i <= 5 else 'MP5'  # Fix the MP column issue for models 6-10
-        formula = f"xWS2r{i} ~ RankAdjEM+I(RankAdjEM**2)+I(RankAdjEM**3)"
-        models[f'r{i}mod3'] = sm.ols(formula=formula, data=df[df[mp_col] > 100]).fit()
+        formula = f"vWS{i} ~ RankAdjEM+I(RankAdjEM**2)+I(RankAdjEM**3)"
+        models[f'r{i}mod3'] = sm.ols(formula=formula, data=df[df[mp_col] >= 100]).fit()
     return models
 
 df = load_data()
@@ -134,7 +134,7 @@ def create_histogram(team_rank, player_rank, bins=30):
         raise ValueError("Invalid player rank")
     
     # Get data
-    column = f'xWS2r{player_rank}'
+    column = f'vWS{player_rank}'
     mins_col = f'MP{player_rank}' if player_rank <= 5 else 'MP5'
     tm_bin = get_team_bin(team_rank)
     
@@ -166,9 +166,9 @@ def create_histogram(team_rank, player_rank, bins=30):
     ax.legend()
     
     # Labels and formatting
-    ax.set_xlabel('VWS')
+    ax.set_xlabel('vWS')
     ax.set_ylabel('Frequency')
-    ax.set_title(f'VWS Distribution for Player Rank {player_rank} on Team Rank {team_rank}\n(Target: {target_value})')
+    ax.set_title(f'vWS Distribution for Player Rank {player_rank} on Team Rank {team_rank}\n(Target: {target_value})')
     ax.grid(True, alpha=0.3)
     
     return fig, ax
@@ -502,13 +502,13 @@ def main():
             # Individual metrics
             try:
                 vws_value = vws_functions[f'vws{player_rank}'](team_rank)
-                st.metric("Projected VWS", f"{vws_value:.3f}")
+                st.metric("Projected vWS", f"{vws_value:.3f}")
                 
                 team_bin = get_team_bin(team_rank)
                 st.info(f"Team Bin: {team_bin}")
                 
                 # Show some statistics
-                column = f'xWS2r{player_rank}'
+                column = f'vWS{player_rank}'
                 mins_col = f'MP{player_rank}' if player_rank <= 5 else 'MP5'
                 data = df[(df[mins_col] >= 100) & (df['KP_Bins_20'] == team_bin)][column].dropna()
                 
@@ -526,7 +526,7 @@ def main():
                 st.error(f"Error calculating metrics: {str(e)}")
     
     with tab2:
-        st.subheader("Complete Team VWS Analysis")
+        st.subheader("Complete Team vWS Analysis")
         try:
             metrics = display_vws_dashboard(team_rank, replacement_value, use_plotly)
             
@@ -535,7 +535,7 @@ def main():
                 percentages, vws_values = calculate_vws_metrics(team_rank, replacement_value)
                 summary_df = pd.DataFrame({
                     'Player Rank': range(1, 11),
-                    'VWS Above Replacement': vws_values,
+                    'vWS Above Replacement': vws_values,
                     'Percentage': percentages
                 })
                 st.dataframe(summary_df, use_container_width=True)
