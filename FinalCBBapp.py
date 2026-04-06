@@ -18,7 +18,7 @@ def load_data():
 def fit_models(df):
     models = {}
     for i in range(1, 11):
-        mp_col = f'MP{i}' if i <= 5 else 'MP5'  # Fix the MP column issue for models 6-10
+        mp_col = f'MP{i}'
         formula = f"vWS{i} ~ RankAdjEM+I(RankAdjEM**2)+I(RankAdjEM**3)"
         models[f'r{i}mod3'] = sm.ols(formula=formula, data=df[df[mp_col] >= 100]).fit()
     return models
@@ -80,7 +80,7 @@ def get_team_bin(rank):
     elif rank <= 340:
         return "321-340"
     else:
-        return "341+"
+        return "+341"
 
 def estimate_team_rank_from_vws(total_vws, replacement_value=0):
     """Estimate team rank based on total VWS using the same models but in reverse"""
@@ -128,14 +128,14 @@ def estimate_team_rank_from_vws(total_vws, replacement_value=0):
 def create_histogram(team_rank, player_rank, bins=30):
     """Create a histogram with highlighted target value"""
     # Validation
-    if team_rank < 1:
-        raise ValueError("Team rank too low")
+    if not (1 <= team_rank <= 350):
+        raise ValueError("Team rank must be between 1 and 350")
     if not (1 <= player_rank <= 10):
         raise ValueError("Invalid player rank")
 
     # Get data
     column = f'vWS{player_rank}'
-    mins_col = f'MP{player_rank}' if player_rank <= 5 else 'MP5'
+    mins_col = f'MP{player_rank}'
     tm_bin = get_team_bin(team_rank)
 
     # Filter data
@@ -522,7 +522,7 @@ def main():
 
                 # Show some statistics
                 column = f'vWS{player_rank}'
-                mins_col = f'MP{player_rank}' if player_rank <= 5 else 'MP5'
+                mins_col = f'MP{player_rank}'
                 data = df[(df[mins_col] >= 100) & (df['KP_Bins_20'] == team_bin)][column].dropna()
 
                 if len(data) > 0:
